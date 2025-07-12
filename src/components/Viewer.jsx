@@ -1,10 +1,10 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
 import * as THREE from "three";
+import MediaViewPanel from "./MediaViewPanel.jsx"; // Import ScreenCapture component
 
-import RecordIcon from "../assets/record.svg";
 import OrientationIcon from "../assets/orientation.svg";
 import RightBottomIcon from "../assets/right-bottom.svg";
 import CollaborationIcon from "../assets/collaboration.svg";
@@ -153,11 +153,7 @@ export default function Viewer() {
 
       {/* Bottom-center: Record */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-4 z-10">
-        <img
-          src={RecordIcon}
-          alt="Record"
-          className="h-10 w-auto cursor-pointer"
-        />
+        <MediaViewPanel />
       </div>
 
       {/* Bottom-right: Orientation */}
