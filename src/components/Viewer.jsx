@@ -106,7 +106,7 @@ export default function Viewer() {
       <div className="absolute top-2 left-2 z-20 flex items-center space-x-4">
         <div className="flex items-center text-xl font-satoshi font-medium">
           <span className="text-[#598BE4]">Surgi</span>
-          <span className="text-black">Com</span>
+          <span className="text-black">Com.</span>
         </div>
         <div className="border-l h-5" />
         <div className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
