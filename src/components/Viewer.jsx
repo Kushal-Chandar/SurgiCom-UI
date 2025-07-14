@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Canvas } from "@react-three/fiber";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
 import * as THREE from "three";
-import MediaViewPanel from "./MediaViewPanel.jsx"; // Import ScreenCapture component
+import MediaViewPanel from "./MediaViewPanel";
 
+// Icons
 import OrientationIcon from "../assets/orientation.svg";
 import RightBottomIcon from "../assets/right-bottom.svg";
 import CollaborationIcon from "../assets/collaboration.svg";
@@ -51,6 +52,26 @@ function Scene({ stlGeometry, orbitRef, cameraRef }) {
   );
 }
 
+function ScreenshotHelper({ onCaptureReady }) {
+  const { gl, scene, camera } = useThree();
+
+  useEffect(() => {
+    if (typeof onCaptureReady === "function") {
+      onCaptureReady(() => {
+        gl.render(scene, camera);
+        const dataURL = gl.domElement.toDataURL("image/png");
+        const timestamp = new Date().toISOString().replace(/[:.-]/g, "_");
+        const link = document.createElement("a");
+        link.href = dataURL;
+        link.download = `SurgiCom_${timestamp}.png`;
+        link.click();
+      });
+    }
+  }, [gl, scene, camera, onCaptureReady]);
+
+  return null;
+}
+
 export default function Viewer() {
   const [stlGeometry, setStlGeometry] = useState(null);
   const [fileName, setFileName] = useState("File Name");
@@ -59,6 +80,7 @@ export default function Viewer() {
   const fileInputRef = useRef();
   const orbitRef = useRef();
   const cameraRef = useRef();
+  const captureFnRef = useRef(null);
 
   const loadSTL = (file) => {
     const loader = new STLLoader();
@@ -86,6 +108,12 @@ export default function Viewer() {
     }
   };
 
+  const handleCapture = useCallback(() => {
+    if (captureFnRef.current) {
+      captureFnRef.current();
+    }
+  }, []);
+
   return (
     <div className="w-full h-full relative">
       {/* Hidden file input */}
@@ -102,7 +130,7 @@ export default function Viewer() {
         }}
       />
 
-      {/* Top-left: SurgiCom brand and filename */}
+      {/* Top-left: brand and file */}
       <div className="absolute top-2 left-2 z-20 flex items-center space-x-4">
         <div className="flex items-center text-xl font-satoshi font-medium">
           <span className="text-[#598BE4]">Surgi</span>
@@ -113,8 +141,6 @@ export default function Viewer() {
           {fileName}
         </div>
         <div className="border-l h-5" />
-
-        {/* Upload STL icon with hover label */}
         <div className="relative flex flex-col items-center group">
           <img
             src={SurgicomIcons}
@@ -128,7 +154,7 @@ export default function Viewer() {
         </div>
       </div>
 
-      {/* Top-right icons */}
+      {/* Top-right */}
       <div className="absolute top-2 right-3 z-10 flex items-center space-x-2">
         <img
           src={CollaborationIcon}
@@ -149,14 +175,15 @@ export default function Viewer() {
           orbitRef={orbitRef}
           cameraRef={cameraRef}
         />
+        <ScreenshotHelper onCaptureReady={(fn) => (captureFnRef.current = fn)} />
       </Canvas>
 
-      {/* Bottom-center: Record */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-4 z-10">
-        <MediaViewPanel />
+      {/* Bottom-center: MediaPanel (includes capture) */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+        <MediaViewPanel onCaptureClick={handleCapture} />
       </div>
 
-      {/* Bottom-right: Orientation */}
+      {/* Orientation icon */}
       <div className="absolute bottom-8 right-20 z-10">
         <img
           src={OrientationIcon}
@@ -165,7 +192,7 @@ export default function Viewer() {
         />
       </div>
 
-      {/* Bottom-right: Reset View with hover label */}
+      {/* Reset View */}
       <div className="absolute bottom-20 right-6 z-10">
         <div className="relative flex flex-col items-center group">
           <img
@@ -180,7 +207,7 @@ export default function Viewer() {
         </div>
       </div>
 
-      {/* Layout toggle button */}
+      {/* Layout toggle */}
       <div className="absolute bottom-72 right-6 z-20">
         <img
           src={LayoutToggleIcon}
@@ -190,7 +217,7 @@ export default function Viewer() {
         />
       </div>
 
-      {/* Layers panel popup with padding */}
+      {/* Layers panel */}
       {showLayers && (
         <div className="absolute bottom-[21rem] right-6 z-30 p-2 bg-white rounded shadow-lg">
           <img src={LayersPanel} alt="Layers Panel" className="w-68 h-auto" />
@@ -199,3 +226,4 @@ export default function Viewer() {
     </div>
   );
 }
+
