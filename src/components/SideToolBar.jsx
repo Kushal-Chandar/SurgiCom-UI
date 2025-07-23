@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PSELogo from "../assets/PreSurgE.svg";
 import Top1 from "../assets/top1.svg";
 import Top2 from "../assets/top2.svg";
@@ -16,67 +16,202 @@ import T3_6 from "../assets/top3-6.svg";
 import T3_7 from "../assets/top3-7.svg";
 import T3_8 from "../assets/top3-8.svg";
 
+const mainTools = [
+  { icon: Top1, label: "Top 1", onClick: () => console.log("Top1 clicked") },
+  { icon: Top2, label: "Top 2", onClick: () => console.log("Top2 clicked") },
+  { icon: Top3, label: "Subtools", toggle: true },
+  { icon: Top4, label: "Top 4", onClick: () => console.log("Top4 clicked") },
+];
+
 const subtools = [
-  { icon: T3_1, label: "Tool 1" },
-  { icon: T3_2, label: "Tool 2" },
-  { icon: T3_3, label: "Tool 3" },
-  { icon: T3_4, label: "Tool 4" },
-  { icon: T3_5, label: "Tool 5" },
-  { icon: T3_6, label: "Tool 6" },
-  { icon: T3_7, label: "Tool 7" },
-  { icon: T3_8, label: "Tool 8" },
+  { icon: T3_1, onClick: () => console.log("Tool1 clicked") },
+  { icon: T3_2, onClick: () => console.log("Tool2 clicked") },
+  { icon: T3_3, onClick: () => console.log("Tool3 clicked") },
+  { icon: T3_4, onClick: () => console.log("Tool4 clicked") },
+  { icon: T3_5, onClick: () => console.log("Tool5 clicked") },
+  { icon: T3_6, onClick: () => console.log("Tool6 clicked") }, // Subtool 6
+  { icon: T3_7, onClick: () => console.log("Tool7 clicked") },
+  { icon: T3_8, onClick: () => console.log("Tool8 clicked") },
 ];
 
 export default function SideToolbar() {
   const [showSubtools, setShowSubtools] = useState(false);
+  const [activeSub, setActiveSub] = useState(null);
+  const [laserPointerActive, setLaserPointerActive] = useState(false);
+
+  const handleSubClick = (idx, tool) => {
+    setActiveSub((prev) => (prev === idx ? null : idx));
+    tool.onClick();
+
+    // If Subtool 6 is clicked, toggle laser pointer tool
+    if (idx === 5) {
+      setLaserPointerActive((prev) => !prev); // Toggle laser pointer state
+    }
+  };
+
+  useEffect(() => {
+    // If laser pointer is active, apply custom cursor styles
+    if (laserPointerActive) {
+      // Hide the default mouse pointer when laser is active
+      document.body.style.cursor = "none"; // Hide default cursor
+
+      // Using a CSS-based red dot cursor
+      const cursorStyle = `
+        .laser-cursor {
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          background-color: red;
+          border-radius: 50%;
+          pointer-events: none;
+          box-shadow: 0 0 10px red; /* Glowing effect */
+          animation: trail 0.5s ease-out;
+        }
+
+        .laser-trail {
+          position: absolute;
+          width: 5px;
+          height: 5px;
+          background-color: red;
+          border-radius: 50%;
+          pointer-events: none;
+          animation: trail 0.5s ease-out;
+          opacity: 0.5;
+        }
+
+        @keyframes trail {
+          0% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(0);
+          }
+        }
+      `;
+
+      // Dynamically add CSS to the document
+      const styleTag = document.createElement("style");
+      styleTag.innerHTML = cursorStyle;
+      document.head.appendChild(styleTag);
+
+      // Create a red dot element (laser cursor)
+      const cursorElement = document.createElement("div");
+      cursorElement.classList.add("laser-cursor");
+
+      // Create a trail effect element
+      const trailElement = document.createElement("div");
+      trailElement.classList.add("laser-trail");
+
+      document.body.appendChild(cursorElement);
+      document.body.appendChild(trailElement);
+
+      const trailEffect = (e) => {
+        // Position the cursor dot where the mouse is
+        cursorElement.style.left = `${e.pageX - 7}px`; // Center the dot
+        cursorElement.style.top = `${e.pageY - 7}px`; // Center the dot
+
+        // Position the trail element to follow the cursor
+        trailElement.style.left = `${e.pageX - 2}px`;
+        trailElement.style.top = `${e.pageY - 2}px`;
+      };
+
+      document.body.addEventListener("mousemove", trailEffect);
+
+      return () => {
+        document.body.removeEventListener("mousemove", trailEffect);
+        document.head.removeChild(styleTag); // Cleanup styles
+        document.body.removeChild(cursorElement); // Remove custom cursor element
+        document.body.removeChild(trailElement); // Remove trail element
+      };
+    } else {
+      // Reset the cursor to default when the laser pointer is turned off
+      document.body.style.cursor = "default"; // Reset cursor to default
+    }
+  }, [laserPointerActive]);
 
   return (
     <div className="w-18 bg-white h-full flex flex-col justify-between items-center py-4">
       {/* Top Section */}
       <div className="flex flex-col items-center space-y-2">
-        <img src={PSELogo} alt="PSE Logo" className="w-9 h-9" />
-        <img src={Top1} alt="Top 1" className="w-14 h-14 cursor-pointer" />
-        <img src={Top2} alt="Top 2" className="w-14 h-14 cursor-pointer" />
-
-        {/* Toggleable Tool with Submenu */}
-        <div className="relative">
+        {/* PSE Logo - Standalone Image */}
+        <div className="w-10 h-10 flex items-center justify-center mb-2">
           <img
-            src={Top3}
-            alt="Top 3"
-            className="w-18 h-18 cursor-pointer"
-            onClick={() => setShowSubtools(!showSubtools)}
+            src={PSELogo}
+            alt="PreSurgE Logo"
+            className="w-full h-full object-contain"
           />
+        </div>
 
-          {/* Subtools dropdown */}
-          {showSubtools && (
-            <div className="absolute left-25 top-5 z-50 bg-white shadow-lg border rounded px-2 py-2">
-              {subtools.map((tool, i) => (
-                <div key={i} className="flex flex-col items-center w-full">
-                  <div className="w-14 h-14 mb-1 flex items-center justify-center rounded">
+        {/* Main Tools */}
+        {mainTools.map((tool, idx) => {
+          const { icon, label, onClick, toggle } = tool;
+          return (
+            <div key={idx} className="relative group">
+              <button
+                type="button"
+                className={`w-14 h-14 flex items-center justify-center focus:outline-none ${toggle && showSubtools ? "bg-gray-200 rounded-full" : ""}`}
+                onClick={
+                  toggle ? () => setShowSubtools((prev) => !prev) : onClick
+                }
+                aria-label={label}
+              >
+                <img
+                  src={icon}
+                  alt={label}
+                  className="w-full h-full object-contain"
+                />
+              </button>
+              <div className="pointer-events-none absolute left-full ml-2 top-1/2 transform -translate-y-1/2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                {label}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Subtools dropdown */}
+        {showSubtools && (
+          <div className="absolute left-20 top-50 z-50 bg-white shadow-lg border rounded px-2 py-2">
+            {subtools.map((tool, i) => {
+              const isSubActive = activeSub === i;
+              return (
+                <React.Fragment key={i}>
+                  <button
+                    type="button"
+                    className={`w-10 h-10 flex items-center justify-center mb-1 focus:outline-none ${isSubActive ? "bg-gray-200 rounded-full" : ""}`}
+                    onClick={() => handleSubClick(i, tool)}
+                    aria-label={`Subtool ${i + 1}`}
+                  >
                     <img
                       src={tool.icon}
-                      alt={tool.label}
-                      className="w-10 h-10 object-contain"
+                      alt=""
+                      className="w-full h-full object-contain"
                     />
-                  </div>
+                  </button>
                   {(i === 2 || i === 5) && (
                     <div className="w-full border-t border-gray-300 my-2" />
                   )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <img src={Top4} alt="Top 4" className="w-14 h-14 cursor-pointer" />
+                </React.Fragment>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Bottom Icons */}
-      <img
-        src={BottomGroup}
-        alt="Bottom Icons"
-        className="w-14 h-auto mb-2 cursor-pointer"
-      />
+      <button
+        type="button"
+        className="w-14 h-auto mb-2 flex items-center justify-center focus:outline-none"
+        onClick={() => console.log("Bottom clicked")}
+        aria-label="Bottom group"
+      >
+        <img
+          src={BottomGroup}
+          alt=""
+          className="w-full h-full object-contain"
+        />
+      </button>
     </div>
   );
 }
