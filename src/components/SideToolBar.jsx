@@ -40,14 +40,27 @@ export default function SideToolbar() {
   const [laserPointerActive, setLaserPointerActive] = useState(false);
 
   const handleSubClick = (idx, tool) => {
-    setActiveSub((prev) => (prev === idx ? null : idx));
+    const newActiveSub = activeSub === idx ? null : idx;
+    setActiveSub(newActiveSub);
     tool.onClick();
 
-    // If Subtool 6 is clicked, toggle laser pointer tool
+    // Control laser pointer based on Subtool 6 (index 5) active state
     if (idx === 5) {
-      setLaserPointerActive((prev) => !prev); // Toggle laser pointer state
+      // Toggle laser pointer when clicking Subtool 6
+      setLaserPointerActive((prev) => !prev);
+    } else {
+      // Turn off laser pointer when any other subtool is clicked
+      setLaserPointerActive(false);
     }
   };
+
+  // Turn off laser pointer when subtools menu is closed
+  useEffect(() => {
+    if (!showSubtools) {
+      setLaserPointerActive(false);
+      setActiveSub(null);
+    }
+  }, [showSubtools]);
 
   useEffect(() => {
     // If laser pointer is active, apply custom cursor styles
